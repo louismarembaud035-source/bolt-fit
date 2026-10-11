@@ -2,12 +2,10 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
 
 export default function App() {
-  // États pour gérer le questionnaire
-  const [step, setStep] = useState(0); // 0: Accueil, 1: Objectif, 2: Niveau, 3: Matériel, 4: Résultat
+  const [step, setStep] = useState(0); // 0: Accueil, 1-3: Questions, 4: Dashboard principal
   const [answers, setAnswers] = useState({ goal: '', level: '', equipment: '' });
-  const [recommendation, setRecommendation] = useState(null);
+  const [userProgram, setUserProgram] = useState(null);
 
-  // Données du questionnaire
   const handleAnswer = (key, value) => {
     const updatedAnswers = { ...answers, [key]: value };
     setAnswers(updatedAnswers);
@@ -19,46 +17,51 @@ export default function App() {
     }
   };
 
-  // Logique de recommandation automatique du programme
   const generateProgram = (finalAnswers) => {
     let program = {
-      title: "Programme Full Body Explosif",
+      title: "Full Body Explosif",
       duration: "4 semaines",
-      description: "Idéal pour sculpter l'ensemble du corps avec un maximum d'efficacité."
+      nextSession: "Séance A - Haut du corps",
+      calories: "350 kcal",
+      durationSession: "45 min"
     };
 
     if (finalAnswers.goal === "Prise de muscle") {
       program = {
-        title: "Hypertrophie & Force Corail",
+        title: "Hypertrophie & Force",
         duration: "6 semaines",
-        description: "Séances axées sur la surcharge progressive et le volume musculaire."
+        nextSession: "Séance Pectoraux / Triceps",
+        calories: "450 kcal",
+        durationSession: "60 min"
       };
     } else if (finalAnswers.goal === "Perte de gras") {
       program = {
         title: "Brûleur de Graisses Cardio",
         duration: "4 semaines",
-        description: "Circuit training intense combinant renforcement et cardio."
+        nextSession: "Circuit HIIT Intense",
+        calories: "500 kcal",
+        durationSession: "35 min"
       };
     }
 
-    setRecommendation(program);
-    setStep(4); // Écran de résultat
+    setUserProgram(program);
+    setStep(4); // Passage direct au Dashboard
   };
 
-  const resetQuiz = () => {
+  const resetApp = () => {
     setStep(0);
     setAnswers({ goal: '', level: '', equipment: '' });
-    setRecommendation(null);
+    setUserProgram(null);
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         
-        {/* En-tête de l'application */}
+        {/* En-tête global */}
         <View style={styles.header}>
           <Text style={styles.logo}>BOLT<Text style={styles.accentText}>FIT</Text></Text>
-          <Text style={styles.tagline}>Ton coach fitness intelligent</Text>
+          {step === 4 && <Text style={styles.welcomeUser}>Salut, champion ! 🔥</Text>}
         </View>
 
         {/* ÉTAPE 0 : Accueil */}
@@ -72,7 +75,7 @@ export default function App() {
           </View>
         )}
 
-        {/* ÉTAPE 1 : Objectif */}
+        {/* ÉTAPES 1, 2, 3 : Questionnaire */}
         {step === 1 && (
           <View style={styles.card}>
             <Text style={styles.stepIndicator}>Question 1 sur 3</Text>
@@ -85,7 +88,6 @@ export default function App() {
           </View>
         )}
 
-        {/* ÉTAPE 2 : Niveau */}
         {step === 2 && (
           <View style={styles.card}>
             <Text style={styles.stepIndicator}>Question 2 sur 3</Text>
@@ -98,11 +100,10 @@ export default function App() {
           </View>
         )}
 
-        {/* ÉTAPE 3 : Matériel */}
         {step === 3 && (
           <View style={styles.card}>
             <Text style={styles.stepIndicator}>Question 3 sur 3</Text>
-            <Text style={styles.title}>De quel matériel disposes-tu ?</Text>
+            <Text style={styles.title}> De quel matériel disposes-tu ?</Text>
             {['Poids du corps uniquement', 'Élastiques / Haltères', 'Salle de sport complète'].map((item) => (
               <TouchableOpacity key={item} style={styles.optionButton} onPress={() => handleAnswer('equipment', item)}>
                 <Text style={styles.optionText}>{item}</Text>
@@ -111,18 +112,43 @@ export default function App() {
           </View>
         )}
 
-        {/* ÉTAPE 4 : Résultat & Recommandation */}
-        {step === 4 && recommendation && (
-          <View style={styles.card}>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>Recommandation sur-mesure</Text>
+        {/* ÉTAPE 4 : TABLEAU DE BORD PRINCIPAL (DASHBOARD) */}
+        {step === 4 && userProgram && (
+          <View>
+            {/* Carte du Programme Actif */}
+            <View style={styles.cardActiveProgram}>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>Programme Actif</Text>
+              </View>
+              <Text style={styles.dashboardProgramTitle}>{userProgram.title}</Text>
+              <Text style={styles.dashboardProgramSub}>Objectif : {answers.goal}</Text>
+              
+              <View style={styles.statsRow}>
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>⏱️ {userProgram.durationSession}</Text>
+                  <Text style={styles.statLabel}>Durée moy.</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>🔥 {userProgram.calories}</Text>
+                  <Text style={styles.statLabel}>Dépense</Text>
+                </View>
+              </View>
             </View>
-            <Text style={styles.resultTitle}>{recommendation.title}</Text>
-            <Text style={styles.resultDuration}>⏱️ Durée : {recommendation.duration}</Text>
-            <Text style={styles.resultDesc}>{recommendation.description}</Text>
-            
-            <TouchableOpacity style={styles.button} onPress={resetQuiz}>
-              <Text style={styles.buttonText}>Recommencer le test</Text>
+
+            {/* Carte de la Séance du Jour */}
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>Séance du jour</Text>
+              <Text style={styles.sessionName}>{userProgram.nextSession}</Text>
+              <Text style={styles.subtitle}>Prêt à transpirer ? Lance ta séance dès maintenant.</Text>
+              
+              <TouchableOpacity style={styles.button} onPress={() => alert("Lancement de la séance ! (Prochaine étape à coder)")}>
+                <Text style={styles.buttonText}>Lancer la séance ▶</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Bouton de réinitialisation pour tester */}
+            <TouchableOpacity style={styles.resetButton} onPress={resetApp}>
+              <Text style={styles.resetButtonText}>Refaire le questionnaire</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -132,44 +158,55 @@ export default function App() {
   );
 }
 
-// Feuille de style (Thème sombre & Rouge Corail)
+// Styles du design system (Thème sombre & Rouge Corail)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212', // Fond sombre anthracite
+    backgroundColor: '#121212',
   },
   scrollContainer: {
     padding: 20,
-    justifyContent: 'center',
     flexGrow: 1,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 30,
+    marginTop: 10,
   },
   logo: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '900',
     color: '#FFFFFF',
     letterSpacing: 2,
   },
   accentText: {
-    color: '#FF5252', // Rouge corail signature
+    color: '#FF5252',
   },
-  tagline: {
+  welcomeUser: {
     color: '#A0A0A0',
     fontSize: 14,
-    marginTop: 5,
+    fontWeight: '600',
   },
   card: {
     backgroundColor: '#1E1E1E',
     borderRadius: 16,
     padding: 24,
+    marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
     elevation: 6,
+  },
+  cardActiveProgram: {
+    backgroundColor: '#1E1E1E',
+    borderRadius: 16,
+    padding: 24,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#FF5252',
   },
   title: {
     fontSize: 22,
@@ -177,11 +214,17 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginBottom: 20,
   },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 10,
+  },
   subtitle: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#A0A0A0',
-    marginBottom: 24,
-    lineHeight: 22,
+    marginBottom: 20,
+    lineHeight: 20,
   },
   stepIndicator: {
     color: '#FF5252',
@@ -191,11 +234,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   button: {
-    backgroundColor: '#FF5252', // Bouton principal rouge corail
+    backgroundColor: '#FF5252',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
-    marginTop: 10,
   },
   buttonText: {
     color: '#FFFFFF',
@@ -227,21 +269,51 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
   },
-  resultTitle: {
-    fontSize: 24,
+  dashboardProgramTitle: {
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 10,
+    marginBottom: 4,
   },
-  resultDuration: {
+  dashboardProgramSub: {
     color: '#A0A0A0',
     fontSize: 14,
-    marginBottom: 12,
+    marginBottom: 16,
   },
-  resultDesc: {
-    color: '#CCCCCC',
-    fontSize: 15,
-    lineHeight: 22,
-    marginBottom: 24,
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: '#2A2A2A',
+    paddingTop: 16,
+  },
+  statItem: {
+    flex: 1,
+  },
+  statValue: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  statLabel: {
+    color: '#A0A0A0',
+    fontSize: 12,
+  },
+  sessionName: {
+    color: '#FF5252',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  resetButton: {
+    alignItems: 'center',
+    padding: 12,
+    marginBottom: 30,
+  },
+  resetButtonText: {
+    color: '#A0A0A0',
+    fontSize: 14,
+    textDecorationLine: 'underline',
   },
 });
